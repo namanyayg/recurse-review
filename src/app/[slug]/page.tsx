@@ -1,9 +1,8 @@
-import { getRequestContext } from '@cloudflare/next-on-pages';
 import { notFound } from 'next/navigation';
 import { slugToName } from '@/utils/slug';
 import { Recurser } from '@/types';
+import { getRequestContext } from '@cloudflare/next-on-pages';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 async function getRecurserByName(name: string): Promise<Recurser | null> {
