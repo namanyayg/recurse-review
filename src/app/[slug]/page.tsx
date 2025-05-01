@@ -4,6 +4,7 @@ import { slugToName } from '@/utils/slug';
 import { Recurser } from '@/types';
 
 export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 async function getRecurserByName(name: string): Promise<Recurser | null> {
   const { env } = getRequestContext();
@@ -22,14 +23,12 @@ async function getRecurserByName(name: string): Promise<Recurser | null> {
   };
 }
 
-type ProfilePageProps = {
-  params: {
-    slug: string;
-  };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
-
-export default async function ProfilePage({ params }: ProfilePageProps) {
+export default async function ProfilePage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const params = await paramsPromise;
   const name = slugToName(params.slug);
   const recurser = await getRecurserByName(name);
 
