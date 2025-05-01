@@ -2,6 +2,7 @@
 	"name": "recurse-review",
 	"version": "0.1.0",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"dev": "next dev --turbopack",
 		"build": "next build",
@@ -14,8 +15,10 @@
 	"dependencies": {
 		"@aws-sdk/client-bedrock-runtime": "^3.535.0",
 		"@opennextjs/cloudflare": "^1.0.0-beta.4",
+		"dotenv": "^16.5.0",
 		"drizzle-orm": "^0.43.1",
 		"next": "15.3.1",
+		"node-fetch": "^3.3.2",
 		"path": "^0.12.7",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
