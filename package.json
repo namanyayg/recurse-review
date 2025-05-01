@@ -10,10 +10,13 @@
 		"lint": "next lint",
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
 		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-		"cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+		"cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+		"fetch-messages": "node scripts/fetch_messages.js",
+		"generate-journey": "node scripts/generate_journey.js"
 	},
 	"dependencies": {
 		"@aws-sdk/client-bedrock-runtime": "^3.535.0",
+		"@cloudflare/d1": "^1.4.1",
 		"@opennextjs/cloudflare": "^1.0.0-beta.4",
 		"dotenv": "^16.5.0",
 		"drizzle-orm": "^0.43.1",
@@ -37,6 +40,6 @@
 		"tailwindcss": "^4",
 		"typescript": "^5",
 		"vercel": "^41.7.0",
-		"wrangler": "^4.13.2"
+		"wrangler": "^4.14.1"
 	}
 }

@@ -48,4 +48,39 @@ The script is configured to fetch messages from:
 - Channel: checkins (#18961)
 - Topic: "Namanyay Goel"
 
-To modify these, edit the CONFIG object in `fetch_messages.js`. 
+To modify these, edit the CONFIG object in `fetch_messages.js`.
+
+## Scripts
+
+### fetch_messages.js
+Fetches your daily check-in messages from Zulip.
+- Requires `.zuliprc` file with your Zulip credentials
+- Saves messages to `data/messages.json`
+
+### generate_journey.js
+Generates story cards from your check-in messages using Claude.
+- Requires AWS credentials in environment:
+  ```
+  AWS_REGION=us-east-1
+  AWS_ACCESS_KEY_ID=your-key
+  AWS_SECRET_ACCESS_KEY=your-secret
+  ```
+- Saves journey to `data/journey/namanyay.json`
+
+### write_journey.js
+Writes journey data to Cloudflare D1 database.
+- Requires Cloudflare Wrangler setup
+- Uses `npx wrangler` to execute D1 commands
+
+## Running the Pipeline
+
+```bash
+# 1. Fetch messages from Zulip
+node scripts/fetch_messages.js
+
+# 2. Generate journey cards
+node scripts/generate_journey.js
+
+# 3. Write to database
+node scripts/write_journey.js
+``` 

@@ -1,9 +1,7 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
-import * as zulipClient from './fetch_messages.js';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
-import { randomUUID } from 'crypto';
 import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,6 +19,10 @@ const CONFIG = {
 async function initializeBedrockClient() {
     try {
         console.log('Initializing Bedrock client...');
+        console.log('AWS Region:', process.env.AWS_REGION || 'us-east-1');
+        console.log('AWS Access Key ID:', process.env.AWS_ACCESS_KEY_ID ? '***' + process.env.AWS_ACCESS_KEY_ID.slice(-4) : 'not set');
+        console.log('AWS Secret Access Key:', process.env.AWS_SECRET_ACCESS_KEY ? '***' + process.env.AWS_SECRET_ACCESS_KEY.slice(-4) : 'not set');
+        
         const client = new BedrockRuntimeClient({
             region: process.env.AWS_REGION || 'us-east-1',
             credentials: {
@@ -32,6 +34,7 @@ async function initializeBedrockClient() {
         return client;
     } catch (error) {
         console.error('Error initializing Bedrock client:', error);
+        console.error('Stack trace:', error.stack);
         throw error;
     }
 }
@@ -129,15 +132,13 @@ The cards should tell a cohesive story of the user's journey.
 
 IMPORTANT: Your response must be valid JSON that can be parsed. Do not include any explanatory text, just return the JSON object.`;
 
-    console.log('Sending request to Claude with prompt length:', prompt.length);
-
     try {
         const command = new InvokeModelCommand({
             modelId: CONFIG.model,
             contentType: 'application/json',
             accept: 'application/json',
             body: JSON.stringify({
-                anthropic_version: '2023-01-01',
+                anthropic_version: 'bedrock-2023-05-31',
                 max_tokens: 4096,
                 messages: [{
                     role: 'user',
@@ -191,49 +192,6 @@ IMPORTANT: Your response must be valid JSON that can be parsed. Do not include a
     }
 }
 
-// Update journey data in D1 database
-async function updateJourneyInDatabase(journeyData) {
-    console.log('Updating journey in database...');
-    try {
-        // Escape single quotes and convert back to string
-        const escapedJourney = JSON.stringify(journeyData).replace(/'/g, "''");
-        const userId = randomUUID();
-        
-        // Execute D1 command using wrangler
-        const command = `
-            INSERT INTO recursers (id, name, journey) 
-            VALUES ('${userId}', '${USER_NAME}', '${escapedJourney}');
-        `;
-
-        console.log('Executing D1 command...');
-        const process = await import('node:child_process');
-        const { stdout, stderr } = await new Promise((resolve, reject) => {
-            process.exec(`npx wrangler d1 execute recurse-review-db-new --remote --command "${command}" --yes`, (error, stdout, stderr) => {
-                if (error) {
-                    console.error('Error executing D1 command:', error);
-                    reject(error);
-                } else {
-                    resolve({ stdout, stderr });
-                }
-            });
-        });
-
-        if (stderr) {
-            console.error('Error output:', stderr);
-        }
-
-        console.log('Journey data updated in database successfully');
-        if (stdout) {
-            console.log('Command output:', stdout);
-        }
-        
-        return { success: true, userId };
-    } catch (error) {
-        console.error('Error updating journey in database:', error);
-        throw error;
-    }
-}
-
 // Main function
 async function main() {
     try {
@@ -247,42 +205,38 @@ async function main() {
             return journeyData;
         }
         
-        // Get messages from Zulip
-        console.log('Fetching messages from Zulip...');
-        const client = await zulipClient.initializeZulipClient();
-        const response = await zulipClient.fetchMessages(client);
-        
-        if (response.result !== 'success') {
-            throw new Error('Failed to fetch messages: ' + response.msg);
-        }
-
-        console.log(`Found ${response.messages.length} messages`);
+        // Get messages from file
+        console.log('Loading messages from file...');
+        const messagesPath = path.resolve(rootDir, 'data/messages.json');
+        const messagesData = await fs.readFile(messagesPath, 'utf-8');
+        const { messages } = JSON.parse(messagesData);
+        console.log(`Loaded ${messages.length} messages from file`);
         
         // Process messages with Claude
         console.log('Processing messages with Claude...');
-        const journeyData = await processMessagesWithClaude(response.messages);
-        
-        // Update journey in database
-        console.log('Updating journey in database...');
-        const result = await updateJourneyInDatabase(journeyData);
+        const journeyData = await processMessagesWithClaude(messages);
         
         console.log('Journey generation completed successfully!');
-        console.log('Result:', result);
-        
         return journeyData;
     } catch (error) {
         console.error('Error in main execution:', error);
+        console.error('Stack trace:', error.stack);
         process.exit(1);
     }
 }
 
 // Execute if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-    main();
+console.log('Running generate_journey.js', import.meta.url, process.argv[1]);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch(error => {
+        console.error('Unhandled error:', error);
+        console.error('Stack trace:', error.stack);
+        process.exit(1);
+    });
 }
 
 // Export for module usage
 export {
     processMessagesWithClaude,
-    updateJourneyInDatabase
+    loadJourneyData
 }; 
