@@ -2,3 +2,6 @@ node_modules
 .env
 .zuliprc
 .env*
+.next
+.vercel
+.wrangler
