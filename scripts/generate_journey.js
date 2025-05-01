@@ -72,7 +72,7 @@ Focus on making the cards visually stunning with gradients, modern design, and m
 The cards should tell a cohesive story of the user's journey.`;
 
     const input = {
-        modelId: 'anthropic.claude-3-sonnet-20240229-v1:0',
+        modelId: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
         contentType: 'application/json',
         accept: 'application/json',
         body: JSON.stringify({
@@ -111,7 +111,7 @@ async function main() {
         const journeyData = await processMessagesWithClaude(response.messages);
         
         // 3. Save to a local file for now (we'll update the database in the next step)
-        const outputPath = path.resolve(rootDir, 'journey_data.json');
+        const outputPath = path.resolve(rootDir, 'data/namanyay_journey_data.json');
         await fs.writeFile(outputPath, JSON.stringify(journeyData, null, 2));
         
         console.log('Journey data generated and saved to:', outputPath);
