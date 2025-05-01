@@ -12,6 +12,7 @@
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
 	},
 	"dependencies": {
+		"@aws-sdk/client-bedrock-runtime": "^3.535.0",
 		"@opennextjs/cloudflare": "^1.0.0-beta.4",
 		"drizzle-orm": "^0.43.1",
 		"next": "15.3.1",
