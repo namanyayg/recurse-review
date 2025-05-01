@@ -1,4 +1,4 @@
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const name = searchParams.get('name');
 
   try {
-    const { env } = getRequestContext();
+    const { env } = getCloudflareContext();
     
     if (operation === 'getAllRecursers') {
       const stmt = env.DB.prepare(`SELECT * FROM recursers ORDER BY created_at DESC`);

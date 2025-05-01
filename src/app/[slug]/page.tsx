@@ -70,8 +70,9 @@ function JourneyTimeline({ journey }: { journey: Journey }) {
   );
 }
 
-export default async function ProfilePage({ params }: { params: { slug: string } }) {
-  const recurser = await getRecurserByName(params.slug);
+export default async function ProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const recurser = await getRecurserByName(slug);
   
   if (!recurser) {
     return (
