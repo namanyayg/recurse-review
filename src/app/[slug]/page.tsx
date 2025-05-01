@@ -14,7 +14,7 @@ interface Journey {
 
 async function getRecurserByName(name: string): Promise<Recurser | null> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL || ''}/api/db?operation=getRecurserByName&name=${encodeURIComponent(name)}`
+    `${process.env.NEXT_PUBLIC_API_URL || window.location.origin}/api/db?operation=getRecurserByName&name=${encodeURIComponent(name)}`
   );
   if (!response.ok) throw new Error('Failed to fetch recurser');
   const result = (await response.json()) as D1Result['results'][0];
