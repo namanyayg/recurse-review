@@ -22,7 +22,14 @@ async function getRecurserByName(name: string): Promise<Recurser | null> {
   };
 }
 
-export default async function ProfilePage({ params }: { params: { slug: string } }) {
+type ProfilePageProps = {
+  params: {
+    slug: string;
+  };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export default async function ProfilePage({ params }: ProfilePageProps) {
   const name = slugToName(params.slug);
   const recurser = await getRecurserByName(name);
 
