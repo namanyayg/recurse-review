@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const name = searchParams.get('name');
-  const { env } = getRequestContext();
+  const { env } = getCloudflareContext();
 
   if (!name) {
     return NextResponse.json({ error: 'Name parameter is required' }, { status: 400 });
