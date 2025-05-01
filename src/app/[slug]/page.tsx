@@ -1,8 +1,14 @@
-import { notFound } from 'next/navigation';
-import { slugToName } from '@/utils/slug';
 import { Recurser, D1Result } from '@/types';
 
-export const dynamic = 'force-dynamic';
+interface JourneyCard {
+  html: string;
+  type: 'achievement' | 'project' | 'relationship' | 'quote' | 'growth';
+  timestamp?: string;
+}
+
+interface Journey {
+  cards: JourneyCard[];
+}
 
 async function getRecurserByName(name: string): Promise<Recurser | null> {
   const response = await fetch(
@@ -22,35 +28,64 @@ async function getRecurserByName(name: string): Promise<Recurser | null> {
   };
 }
 
-export default async function ProfilePage({
-  params: paramsPromise,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const params = await paramsPromise;
-  const name = slugToName(params.slug);
-  const recurser = await getRecurserByName(name);
-
+export default async function ProfilePage({ params }: { params: { slug: string } }) {
+  const recurser = await getRecurserByName(params.slug);
+  
   if (!recurser) {
-    notFound();
+    return <div>Recurser not found</div>;
   }
 
+  const journey: Journey = JSON.parse(recurser.journey);
+
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-6 mb-8">
-          <div className="w-40 h-40 rounded-full overflow-hidden">
-            <img
-              src={recurser.profile_picture_url}
-              alt={`${recurser.name}'s profile picture`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800">{recurser.name}</h1>
+    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Profile Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <div className="flex items-center space-x-4">
+            {recurser.profile_picture_url && (
+              <img
+                src={recurser.profile_picture_url}
+                alt={recurser.name}
+                className="h-16 w-16 rounded-full"
+              />
+            )}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{recurser.name}</h1>
+              <p className="text-sm text-gray-500">
+                Joined {new Date(recurser.created_at).toLocaleDateString()}
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Journey Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {journey.cards?.map((card, index) => (
+            <div
+              key={index}
+              className={`
+                bg-white rounded-lg shadow-sm overflow-hidden
+                ${card.type === 'achievement' && 'bg-gradient-to-br from-purple-500 to-pink-500'}
+                ${card.type === 'project' && 'bg-gradient-to-br from-blue-500 to-cyan-500'}
+                ${card.type === 'relationship' && 'bg-gradient-to-br from-green-500 to-teal-500'}
+                ${card.type === 'quote' && 'bg-gradient-to-br from-yellow-500 to-orange-500'}
+                ${card.type === 'growth' && 'bg-gradient-to-br from-red-500 to-rose-500'}
+              `}
+            >
+              <div 
+                className="p-6 text-white"
+                dangerouslySetInnerHTML={{ __html: card.html }}
+              />
+              {card.timestamp && (
+                <div className="px-6 py-2 bg-black bg-opacity-20 text-white text-sm">
+                  {new Date(card.timestamp).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-    </main>
+    </div>
   );
 } 
