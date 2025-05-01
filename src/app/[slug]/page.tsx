@@ -1,18 +1,18 @@
 import { notFound } from 'next/navigation';
 import { slugToName } from '@/utils/slug';
-import { Recurser } from '@/types';
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { Recurser, D1Result } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 async function getRecurserByName(name: string): Promise<Recurser | null> {
-  const { env } = getRequestContext();
-  const stmt = env.DB.prepare('SELECT * FROM recursers WHERE name = ?');
-  const { results } = await stmt.bind(name).all();
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL || ''}/api/db?operation=getRecurserByName&name=${encodeURIComponent(name)}`
+  );
+  if (!response.ok) throw new Error('Failed to fetch recurser');
+  const result = (await response.json()) as D1Result['results'][0];
   
-  if (results.length === 0) return null;
+  if (!result) return null;
   
-  const result = results[0] as Record<string, unknown>;
   return {
     id: String(result.id || ''),
     name: String(result.name || ''),

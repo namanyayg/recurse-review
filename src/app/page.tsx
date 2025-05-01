@@ -1,15 +1,12 @@
-import { getRequestContext } from '@cloudflare/next-on-pages';
 import { RecurserCard } from './components/RecurserCard';
 import { Recurser, D1Result } from '@/types';
 
-export const runtime = 'edge';
-
 async function getRecursers(): Promise<Recurser[]> {
-  const { env } = getRequestContext();
-  const stmt = env.DB.prepare(`SELECT * FROM recursers ORDER BY created_at DESC`);
-  const { results } = (await stmt.all()) as D1Result;
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/db?operation=getAllRecursers`);
+  if (!response.ok) throw new Error('Failed to fetch recursers');
+  const results = (await response.json()) as D1Result['results'];
   
-  return results.map(result => ({
+  return results.map((result) => ({
     id: String(result.id || ''),
     name: String(result.name || ''),
     profile_picture_url: String(result.profile_picture_url || ''),

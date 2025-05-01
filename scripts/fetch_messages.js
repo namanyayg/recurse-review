@@ -1,5 +1,5 @@
-const zulip = require('zulip-js');
-const path = require('path');
+import zulip from 'zulip-js';
+import path from 'path';
 
 const rootDir = path.resolve(__dirname, '..');
 
