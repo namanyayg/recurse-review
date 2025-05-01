@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from 'next/server';
+import { slugToName } from '@/utils/slug';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -16,8 +17,9 @@ export async function GET(request: Request) {
     }
     
     if (operation === 'getRecurserByName' && name) {
+      const originalName = slugToName(name);
       const stmt = env.DB.prepare('SELECT * FROM recursers WHERE name = ?');
-      const { results } = await stmt.bind(name).all();
+      const { results } = await stmt.bind(originalName).all();
       return NextResponse.json(results[0] || null);
     }
 
