@@ -7,5 +7,8 @@ CREATE TABLE IF NOT EXISTS recursers (
     name TEXT NOT NULL,
     profile_picture_url TEXT,
     journey TEXT,
+    zulip_messages INTEGER,
+    zulip_messages_updated_at DATETIME,
+    journey_updated_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ); 

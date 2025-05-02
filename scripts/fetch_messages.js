@@ -8,13 +8,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
+const USER_NAME = 'namanyay';
+const TOPIC_NAME = 'Namanyay Goel';
+
 // Configuration constants
 const CONFIG = {
     zuliprc: '.zuliprc',
     channel: 'checkins',
-    topic: 'Dena Metili Mwangi',
+    topic: TOPIC_NAME,
     cacheDir: path.resolve(rootDir, 'data/zulip'),
-    cacheFile: 'dena.txt'
+    cacheFile: `${USER_NAME}.txt`
 };
 
 /**
@@ -128,10 +131,7 @@ export async function exportMessagesToJson(messages, outputPath) {
         const processedMessages = messages.map(msg => ({
             timestamp: new Date(msg.timestamp * 1000).toISOString(),
             content: msg.content,
-            sender: {
-                name: msg.sender_full_name,
-                email: msg.sender_email
-            }
+            reactions: msg.reactions ? msg.reactions.map(reaction => reaction.emoji_name) : [],
         }));
 
         await fs.writeFile(
@@ -177,7 +177,7 @@ async function main() {
         }
 
         // Export to JSON
-        const outputPath = path.resolve(rootDir, 'data/messages.json');
+        const outputPath = path.resolve(rootDir, `data/zulip/${USER_NAME}.json`);
         await fs.mkdir(path.dirname(outputPath), { recursive: true });
         await exportMessagesToJson(messages, outputPath);
 

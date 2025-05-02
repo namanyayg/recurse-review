@@ -1,23 +1,15 @@
 import type { Config } from 'tailwindcss';
 
-const config: Config = {
+const config = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}', // Assuming components are here
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',     // Assuming app directory structure
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {
-      // Add any theme extensions here if needed in the future
-    },
+    extend: {},
   },
   plugins: [],
-  // @ts-expect-error - safelist is a valid property but might not be recognized by the current types
-  safelist: [
-    {
-      pattern: /.*/, // Safelists all classes - adjust if needed for bundle size
-    },
-  ],
-};
+} satisfies Config;
 
 export default config; 

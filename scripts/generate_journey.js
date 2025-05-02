@@ -11,7 +11,7 @@ const USER_NAME = 'namanyay';
 
 const CONFIG = {
     journeyDir: path.resolve(rootDir, 'data/journey'),
-    journeyFile: 'namanyay.json',
+    journeyFile: `${USER_NAME}.html`,
     model: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
 };
 
@@ -47,41 +47,41 @@ async function checkJourneyExists() {
     try {
         const journeyPath = path.join(CONFIG.journeyDir, CONFIG.journeyFile);
         await fs.access(journeyPath);
-        console.log('Found existing journey data');
+        console.log('Found existing journey HTML');
         return true;
     } catch {
-        console.log('No existing journey data found');
+        console.log('No existing journey HTML found');
         return false;
     }
 }
 
 /**
- * Load journey data from file
- * @returns {Promise<Object>} Journey data
+ * Load journey HTML from file
+ * @returns {Promise<string>} Journey HTML content
  */
 async function loadJourneyData() {
     try {
         const journeyPath = path.join(CONFIG.journeyDir, CONFIG.journeyFile);
         const data = await fs.readFile(journeyPath, 'utf-8');
-        return JSON.parse(data);
+        return data;
     } catch (error) {
-        console.error('Failed to load journey data:', error.message);
+        console.error('Failed to load journey HTML:', error.message);
         throw error;
     }
 }
 
 /**
- * Save journey data to file
- * @param {Object} journeyData - Journey data to save
+ * Save journey HTML to file
+ * @param {string} htmlContent - Journey HTML content to save
  */
-async function saveJourneyData(journeyData) {
+async function saveJourneyData(htmlContent) {
     try {
         await fs.mkdir(CONFIG.journeyDir, { recursive: true });
         const journeyPath = path.join(CONFIG.journeyDir, CONFIG.journeyFile);
-        await fs.writeFile(journeyPath, JSON.stringify(journeyData, null, 2));
-        console.log('Journey data saved successfully');
+        await fs.writeFile(journeyPath, htmlContent);
+        console.log('Journey HTML saved successfully');
     } catch (error) {
-        console.error('Failed to save journey data:', error.message);
+        console.error('Failed to save journey HTML:', error.message);
         throw error;
     }
 }
@@ -90,47 +90,42 @@ async function saveJourneyData(journeyData) {
 async function processMessagesWithClaude(messages) {
     console.log('Processing messages with Claude...');
     const client = await initializeBedrockClient();
-    
+
     // Prepare messages for Claude
-    const messageContent = messages.map(msg => ({
-        timestamp: msg.timestamp,
-        content: msg.content,
-        sender: msg.sender
-    }));
+    const messageContent = messages.messages;
 
     console.log(`Prepared ${messageContent.length} messages for Claude`);
     console.log('Message content sample:', JSON.stringify(messageContent[0], null, 2));
 
-    const prompt = `You are an expert at creating engaging, shareable "Year in Review" style content.
+    const prompt = `You are an expert at creating engaging, shareable "Spotify Year in Review" style content.
 I will provide you with a series of daily check-in messages from a user at the Recurse Center, a programming retreat.
 These messages contain information about what they worked on each day and who they interacted with.
 
-Your task is to analyze these messages and create a set of beautiful, shareable story cards that highlight:
-1. Key achievements and milestones
-2. Interesting projects worked on
-3. Meaningful relationships and collaborations formed
-4. Positive quotes and memorable moments
-5. Growth and learning journey
+Your task is to analyze these messages and create a set of beautiful, shareable story cards. Make it like the Spotify Wrapped page.
 
-Please focus on creating visually appealing, succinct cards that people would want to share.
-Each card should use beautiful gradients and modern design (using Tailwind CSS).
-Keep the content brief and impactful - no one likes to read too much.
+Format requirements:
+- Use Tailwind CSS classes for all styling (NO custom CSS)
+- Create visually appealing cards with gradients and modern design
+- Make each card a constrained width 
+- Use Tailwind's built-in color palette for all colors
+- Ensure text is readable with proper contrast
+- NO HEADER, just the journey directly
+- Make AT LEAST 7 pages focusing on learnings, relationships, projects, growth, interesting moments, interesting quotes, etc.
+- MAKE IT RELATABLE, FUN, SHAREABLE, INTERESTING
+- EXLCUDE ANY HEADER CARD! VERY IMPORTANT
+- DO NOT talk about the time spent or time left
+- Give a GOOD, POSITIVE conclusion
+- Make Quotes with messages from the data
+- Make SURE to mention relationships, friendships, collaborations BY FULL NAMES, in multiple slides. 
+
+Make it look like spotify wrapped, but with a focus on the Recurse Center experience, using emojis and styling and presentation like it.
 
 Here are the messages to analyze:
 ${JSON.stringify(messageContent, null, 2)}
 
-Return a JSON object with an array of "cards", where each card contains:
-{
-  "title": "Card Title",
-  "content": "HTML/JSX content with Tailwind classes",
-  "date": "ISO date string",
-  "type": "achievement|project|collaboration|quote|growth"
-}
-
-Focus on making the cards visually stunning with gradients, modern design, and minimal but impactful text.
-The cards should tell a cohesive story of the user's journey.
-
-IMPORTANT: Your response must be valid JSON that can be parsed. Do not include any explanatory text, just return the JSON object.`;
+Give the result as JSON containing the property "cards" which is an array of HTML fragment with Tailwind classes, each representing it's own spotify wrapped page. Do not include any page structure, CSS, or explanatory text.
+MAKE SURE THE JSON IS FORMATTED AND ESCAPED PERFECTLY.
+The fragment should start and end with a div that uses Tailwind classes.`;
 
     try {
         const command = new InvokeModelCommand({
@@ -151,41 +146,19 @@ IMPORTANT: Your response must be valid JSON that can be parsed. Do not include a
         const response = await client.send(command);
         const responseBody = JSON.parse(new TextDecoder().decode(response.body));
         console.log('Received response from Claude');
-        console.log('Response structure:', Object.keys(responseBody));
         
-        // Extract JSON from the response
-        const text = responseBody.content[0].text;
-        console.log('Raw response text:', text.substring(0, 500) + '...');
+        // Extract HTML fragment from the response
+        const htmlContent = responseBody.content[0].text
+            .replace(/```html\n|```/g, '') // Remove code block markers
+            .replace(/<\/?(?:html|head|body)[^>]*>/g, '') // Remove any full document tags
+            .trim();
         
-        let journeyData;
+        console.log('Generated HTML fragment length:', htmlContent.length);
         
-        try {
-            // First try to parse the entire response as JSON
-            journeyData = JSON.parse(text);
-            console.log('Successfully parsed response as JSON');
-        } catch (error) {
-            // If that fails, try to extract JSON from markdown code blocks
-            console.log('Failed to parse response directly:', error.message);
-            console.log('Trying to extract from code blocks...');
-            const match = text.match(/```(?:json)?\n([\s\S]*?)\n```/);
-            if (!match) {
-                console.error('Raw response:', text);
-                throw new Error('Could not find JSON in Claude response');
-            }
-            try {
-                journeyData = JSON.parse(match[1]);
-                console.log('Successfully parsed JSON from code block');
-            } catch (parseError) {
-                console.error('Failed to parse extracted JSON:', parseError);
-                console.error('Extracted content:', match[1]);
-                throw parseError;
-            }
-        }
+        // Save HTML fragment
+        await saveJourneyData(htmlContent);
         
-        // Save journey data
-        await saveJourneyData(journeyData);
-        
-        return journeyData;
+        return htmlContent;
     } catch (error) {
         console.error('Error processing messages with Claude:', error);
         throw error;
@@ -207,9 +180,9 @@ async function main() {
         
         // Get messages from file
         console.log('Loading messages from file...');
-        const messagesPath = path.resolve(rootDir, 'data/messages.json');
+        const messagesPath = path.resolve(rootDir, `data/zulip/${USER_NAME}.json`);
         const messagesData = await fs.readFile(messagesPath, 'utf-8');
-        const { messages } = JSON.parse(messagesData);
+        const messages = JSON.parse(messagesData);
         console.log(`Loaded ${messages.length} messages from file`);
         
         // Process messages with Claude

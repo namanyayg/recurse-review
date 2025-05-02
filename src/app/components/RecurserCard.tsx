@@ -12,7 +12,12 @@ interface RecurserCardProps {
 
 export function RecurserCard({ recurser }: RecurserCardProps) {
   const slug = nameToSlug(recurser.name);
-  const journey = recurser.journey ? JSON.parse(recurser.journey) : { cards: [] };
+  if (!recurser.journey) {
+    return null
+  }
+  console.log(recurser.journey)
+  const journey = JSON.parse(recurser.journey.replace(/\\"/g, '"').replace(/\\\\/g, '\\'))
+  console.log(journey)
   const latestCard = journey.cards?.[0];
   
   return (
