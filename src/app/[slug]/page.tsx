@@ -1,6 +1,8 @@
 import { Recurser, D1Result } from '@/types';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic'
+
 interface Journey {
   cards: string[];
 }
