@@ -12,9 +12,9 @@ const rootDir = path.resolve(__dirname, '..');
 const CONFIG = {
     zuliprc: '.zuliprc',
     channel: 'checkins',
-    topic: 'Namanyay Goel',
+    topic: 'Dena Metili Mwangi',
     cacheDir: path.resolve(rootDir, 'data/zulip'),
-    cacheFile: 'namanyay.txt'
+    cacheFile: 'dena.txt'
 };
 
 /**
@@ -161,6 +161,7 @@ async function main() {
             console.log(`Loaded ${messages.length} messages from cache`);
         } else {
             // Fetch from Zulip if no cache
+            console.log('Fetching messages from Zulip...');
             const client = await initializeZulipClient();
             const response = await fetchMessages(client);
             
@@ -187,6 +188,8 @@ async function main() {
         process.exit(1);
     }
 }
+
+main();
 
 // Execute if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
