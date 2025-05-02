@@ -5,11 +5,11 @@ async function getRecursers(): Promise<Recurser[]> {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/db?operation=getAllRecursers`);
   if (!response.ok) {
     console.error('Failed to fetch recursers:', response.statusText);
-    console.error('Response:', await response.text());
     console.error('Response status:', response.status);
     console.error('Response headers:', Object.fromEntries(response.headers.entries()));
     console.error('Response body:', await response.text());
-    throw new Error('Failed to fetch recursers');
+    return [];
+    // throw new Error('Failed to fetch recursers');
   }
   try {
     const results = (await response.json()) as D1Result['results'];
