@@ -3,23 +3,36 @@
 import { useEffect, useState } from "react";
 import { Recurser, D1Result } from "@/types";
 import Link from "next/link";
-import { parseJourney, Journey } from '@/utils/journeyParser';
+import { parseJourney } from '@/utils/journeyParser';
+import { Journey } from "@/types";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { EffectCards } from 'swiper/modules';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/effect-cards';
 
 function JourneyComponent({ journey }: { journey: Journey }) {
   return (
-    <div className="relative">
-      {/* Cards */}
-      <div className="space-y-12 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {journey.cards.map((card, index) => (
-          <div
-            key={index}
-            className={
-              `journey-card relative mx-8 rounded-xl overflow-hidden shadow-lg`
-            }
-            dangerouslySetInnerHTML={{ __html: card }}
-          />
+    <div className="w-full max-w-md mx-auto"> {/* Constrain width for better card view */}
+      <Swiper
+        effect={'cards'}
+        grabCursor={true}
+        modules={[EffectCards]}
+        className="journey-swiper"
+        cardsEffect={{
+          perSlideRotate: 2,
+        }}
+      >
+        {journey.cards.map((card: string, index: number) => (
+          <SwiperSlide key={index} className="journey-card-slide rounded-xl overflow-hidden shadow-lg bg-white"> {/* Added background */}
+            <div
+              className="journey-card"
+              dangerouslySetInnerHTML={{ __html: card }}
+            />
+          </SwiperSlide>
         ))}
-      </div>
+      </Swiper>
     </div>
   );
 }

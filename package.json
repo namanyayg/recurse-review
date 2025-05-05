@@ -28,6 +28,7 @@
 		"path": "^0.12.7",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
+		"swiper": "^11.2.6",
 		"zulip-js": "^2.1.0"
 	},
 	"devDependencies": {
