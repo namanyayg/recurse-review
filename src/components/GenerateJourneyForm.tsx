@@ -66,12 +66,11 @@ export default function GenerateJourneyForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-gray-700 mb-4">Generate Recurser Journey</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
+    <div className="max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit} className="flex gap-4">
+        <div className="flex-1">
           <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">
-            Recurser&apos;s Full Name:
+            Enter Recurser Full Name:
           </label>
           <input
             type="text"
@@ -86,7 +85,7 @@ export default function GenerateJourneyForm() {
         </div>
         <button
           type="submit"
-          className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}`}
+          className={`w-48 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}`}
           disabled={isLoading}
         >
           {isLoading ? (
