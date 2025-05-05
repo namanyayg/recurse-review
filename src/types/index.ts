@@ -16,6 +16,10 @@ export interface D1Result {
   }>;
 }
 
+export interface Journey {
+  cards: string[];
+}
+
 declare global {
   interface CloudflareEnv {
     DB: D1Database;

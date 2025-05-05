@@ -9,3 +9,7 @@
 
 
 /* Custom styles can be added below */
+.journey-card > * {
+  padding: 20px;
+  height: 100%;
+}

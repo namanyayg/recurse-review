@@ -3,26 +3,21 @@
 import { useEffect, useState } from "react";
 import { Recurser, D1Result } from "@/types";
 import Link from "next/link";
-
-interface Journey {
-  cards: string[];
-}
+import { parseJourney, Journey } from '@/utils/journeyParser';
 
 function JourneyComponent({ journey }: { journey: Journey }) {
   return (
     <div className="relative">
       {/* Cards */}
-      <div className="space-y-12">
+      <div className="space-y-12 grid grid-cols-1 md:grid-cols-2 gap-4">
         {journey.cards.map((card, index) => (
-          <div key={index}>
-            {/* Card content */}
-            <div
-              className={
-                `relative mx-8 rounded-xl overflow-hidden shadow-lg`
-              }
-              dangerouslySetInnerHTML={{ __html: card }}
-            />
-          </div>
+          <div
+            key={index}
+            className={
+              `journey-card relative mx-8 rounded-xl overflow-hidden shadow-lg`
+            }
+            dangerouslySetInnerHTML={{ __html: card }}
+          />
         ))}
       </div>
     </div>
@@ -95,12 +90,7 @@ export default function ProfileClient({ slug }: { slug: string }) {
     );
   }
 
-  let journey: Journey = { cards: [] };
-  try {
-    journey = JSON.parse(recurser.journey.replace(/\\"/g, '"').replace(/\\\\/g, '\\'));
-  } catch {
-    journey = { cards: [] };
-  }
+  const journey = parseJourney(recurser.journey);
 
   return (
     <div className="min-h-screen bg-gray-50">
