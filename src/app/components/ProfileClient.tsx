@@ -3,28 +3,36 @@
 import { useEffect, useState } from "react";
 import { Recurser, D1Result } from "@/types";
 import Link from "next/link";
+import { parseJourney } from '@/utils/journeyParser';
+import { Journey } from "@/types";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { EffectCards } from 'swiper/modules';
 
-interface Journey {
-  cards: string[];
-}
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/effect-cards';
 
 function JourneyComponent({ journey }: { journey: Journey }) {
   return (
-    <div className="relative">
-      {/* Cards */}
-      <div className="space-y-12">
-        {journey.cards.map((card, index) => (
-          <div key={index}>
-            {/* Card content */}
+    <div className="w-full max-w-md mx-auto"> {/* Constrain width for better card view */}
+      <Swiper
+        effect={'cards'}
+        grabCursor={true}
+        modules={[EffectCards]}
+        className="journey-swiper"
+        cardsEffect={{
+          perSlideRotate: 2,
+        }}
+      >
+        {journey.cards.map((card: string, index: number) => (
+          <SwiperSlide key={index} className="journey-card-slide rounded-xl overflow-hidden shadow-lg bg-white"> {/* Added background */}
             <div
-              className={
-                `relative mx-8 rounded-xl overflow-hidden shadow-lg`
-              }
+              className="journey-card"
               dangerouslySetInnerHTML={{ __html: card }}
             />
-          </div>
+          </SwiperSlide>
         ))}
-      </div>
+      </Swiper>
     </div>
   );
 }
@@ -95,12 +103,7 @@ export default function ProfileClient({ slug }: { slug: string }) {
     );
   }
 
-  let journey: Journey = { cards: [] };
-  try {
-    journey = JSON.parse(recurser.journey.replace(/\\"/g, '"').replace(/\\\\/g, '\\'));
-  } catch {
-    journey = { cards: [] };
-  }
+  const journey = parseJourney(recurser.journey);
 
   return (
     <div className="min-h-screen bg-gray-50">
