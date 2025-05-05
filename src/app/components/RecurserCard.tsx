@@ -16,9 +16,20 @@ export function RecurserCard({ recurser }: RecurserCardProps) {
     return null
   }
   console.log(recurser.journey)
-  const journey = JSON.parse(recurser.journey.replace(/\\"/g, '"').replace(/\\\\/g, '\\'))
+  let journey
+  try {
+    journey = JSON.parse(recurser.journey.replace(/\\"/g, '"').replace(/\\\\/g, '\\'))
+  } catch (error) {
+    try {
+      journey = JSON.parse(recurser.journey.replace(/\\"/g, '"'))
+    } catch (error2) {
+      console.error('Error parsing journey:', error, error2)
+      console.log(recurser.journey)
+      journey = null
+    }
+  }
   console.log(journey)
-  const latestCard = journey.cards?.[0];
+  const latestCard = journey?.cards?.[0];
   
   return (
     <Link 

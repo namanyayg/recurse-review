@@ -1,4 +1,5 @@
 import RecursersListClient from './components/RecursersListClient';
+import GenerateJourneyForm from '@/components/GenerateJourneyForm';
 
 export default function Home() {
   return (
@@ -13,6 +14,11 @@ export default function Home() {
             Explore the journeys and achievements of Recursers as they learn, build, and grow together.
           </p>
         </div>
+      </div>
+
+      {/* Generate Journey Form Section */}
+      <div className="py-12">
+        <GenerateJourneyForm />
       </div>
 
       {/* Content Section */}
