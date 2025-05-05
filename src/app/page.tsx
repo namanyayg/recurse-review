@@ -5,19 +5,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+      <div className="py-4 font-mono">
+        <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Welcome to Recurse Center Review
+            Recurse <span className="text-blue-500">Re</span>view
           </h1>
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+          <p className="text-xl">
             Explore the journeys and achievements of Recursers as they learn, build, and grow together.
           </p>
         </div>
       </div>
 
       {/* Generate Journey Form Section */}
-      <div className="py-12">
+      <div>
         <GenerateJourneyForm />
       </div>
 
