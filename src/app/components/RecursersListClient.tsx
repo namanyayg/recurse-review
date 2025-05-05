@@ -21,6 +21,7 @@ export default function RecursersListClient() {
           return;
         }
         const results = (await response.json()) as D1Result['results'];
+        console.log(results);
         setRecursers(
           results.map((result) => ({
             id: String(result.id || ''),
