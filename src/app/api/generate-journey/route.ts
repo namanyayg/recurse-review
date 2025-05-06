@@ -1,9 +1,13 @@
 import 'cross-fetch/polyfill'; // Polyfill fetch globally for compatibility
 import { NextResponse } from 'next/server';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import crypto from 'crypto';
 import { Buffer } from 'buffer';
+
+// Add Vercel AI SDK imports
+import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
+import { generateText, CoreMessage } from 'ai';
+import { LanguageModel } from 'ai'; // Type for the model instance
 
 // Minimal interface for the Zulip API response
 interface ZulipResponse {
@@ -31,6 +35,7 @@ interface Env {
     AWS_REGION?: string;
     AWS_ACCESS_KEY_ID?: string;
     AWS_SECRET_ACCESS_KEY?: string;
+    // AWS_SESSION_TOKEN?: string; // If you use session tokens
 }
 
 // --- Zulip Helper Functions ---
@@ -174,49 +179,49 @@ async function updateRecurserWithJourneyData(db: D1Database, userId: string, jou
 }
 
 
-// --- Bedrock Helper Functions ---
+// --- Bedrock Helper Functions (Refactored for Vercel AI SDK) ---
 
-async function initializeBedrockClient(env: Env): Promise<BedrockRuntimeClient> {
-     if (!env.AWS_REGION || !env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) {
+// Store the model ID, e.g., from Anthropic Claude 3.5 Sonnet
+const BEDROCK_MODEL_ID = 'anthropic.claude-3-5-sonnet-20240620-v1:0';
+
+async function initializeAiSdkBedrockModel(env: Env): Promise<LanguageModel> {
+    if (!env.AWS_REGION || !env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) {
         throw new Error('AWS credentials (AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) are not configured in environment.');
     }
     try {
-        const client = new BedrockRuntimeClient({
+        // Create a Bedrock provider instance using Vercel AI SDK
+        const bedrockProvider = createAmazonBedrock({
             region: env.AWS_REGION,
-            credentials: {
-                accessKeyId: env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-                // sessionToken: env.AWS_SESSION_TOKEN, // Add if using temporary credentials
-            },
-            // Force the SDK to use these specific credentials without further discovery via the default provider chain
-            credentialDefaultProvider: () => async () => ({
-                accessKeyId: env.AWS_ACCESS_KEY_ID!,
-                secretAccessKey: env.AWS_SECRET_ACCESS_KEY!,
-                // sessionToken: env.AWS_SESSION_TOKEN, // Add if using temporary credentials
-            })
+            accessKeyId: env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
         });
-        console.log('Bedrock client initialized successfully with explicit credentials and credentialDefaultProvider.');
-        return client;
+
+        // Get a specific model from the provider
+        const model = bedrockProvider(BEDROCK_MODEL_ID);
+        
+        console.log(`Vercel AI SDK Bedrock model "${BEDROCK_MODEL_ID}" initialized successfully.`);
+        return model;
     } catch (error) {
-        console.error('Error initializing Bedrock client:', error);
-        // Type check the error
+        console.error('Error initializing Vercel AI SDK Bedrock model:', error);
         const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`Error initializing Bedrock client: ${message}`);
+        throw new Error(`Error initializing Vercel AI SDK Bedrock model: ${message}`);
     }
 }
 
-async function generateJourneyHtmlFromMessages(bedrockClient: BedrockRuntimeClient, messages: ZulipMessage[], userName: string): Promise<string> {
-    console.log(`Generating journey for "${userName}" using ${messages.length} messages.`);
+async function generateJourneyHtmlFromMessages(
+    aiSdkModel: LanguageModel, // Changed from BedrockRuntimeClient
+    messages: ZulipMessage[],
+    userName: string
+): Promise<string> {
+    console.log(`Generating journey for "${userName}" using ${messages.length} messages with Vercel AI SDK.`);
 
-    // Prepare message format suitable for the LLM
-     const processedMessages = messages.map(msg => ({
+    const processedMessages = messages.map(msg => ({
         timestamp: new Date(msg.timestamp * 1000).toISOString(),
         content: msg.content,
-        // Include other relevant fields if needed, e.g., reactions
-        // reactions: msg.reactions ? msg.reactions.map(reaction => reaction.emoji_name) : [],
     }));
 
-    const prompt = `You are an expert at creating engaging, shareable "Spotify Year in Review" style content.
+    // Separate the instructional part of the prompt (system) and the data (user)
+    const systemPrompt = `You are an expert at creating engaging, shareable "Spotify Year in Review" style content.
 I will provide you with a series of daily check-in messages from a user at the Recurse Center, a programming retreat.
 These messages contain information about what they worked on each day and who they interacted with.
 
@@ -226,7 +231,7 @@ Format requirements:
 - Use Tailwind CSS classes for all styling (NO custom CSS)
 - Create visually appealing cards
 - Ensure each card has good information architecture, no text-sm, but readable text and information with good spacing and layout.
-- Make each card a constrained width 
+- Make each card a constrained width
 - Use Tailwind's built-in color palette for all colors
 - Ensure text is readable with proper contrast
 - NO HEADER, just the journey directly
@@ -236,61 +241,55 @@ Format requirements:
 - DO NOT talk about the time spent or time left
 - Give a GOOD, POSITIVE conclusion
 - Make Quotes with messages from the data
-- Make SURE to mention relationships, friendships, collaborations BY FULL NAMES, in multiple slides. 
+- Make SURE to mention relationships, friendships, collaborations BY FULL NAMES, in multiple slides.
 
 Make it look like spotify wrapped, but with a focus on the Recurse Center experience, using emojis and styling and presentation like it.
-
-Here are the messages to analyze:
-${JSON.stringify(processedMessages, null, 2)}
-
 
 Give the result as JSON containing the property "cards" which is an array of HTML fragment with Tailwind classes, each representing it's own spotify wrapped page. Do not include any page structure, CSS, or explanatory text.
 MAKE SURE THE JSON IS FORMATTED AND ESCAPED PERFECTLY.
 The fragment should start and end with a div that uses Tailwind classes.
 JUST GIVE THE JSON DIRECTLY, DO NOT INCLUDE ANY OTHER TEXT.`;
 
+    const userMessagesContent = `Here are the messages to analyze for user "${userName}":
+${JSON.stringify(processedMessages, null, 2)}`;
+
+    const coreMessages: CoreMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessagesContent }
+    ];
 
     try {
-        const command = new InvokeModelCommand({
-            // modelId: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0', // Use the specific model ID
-             modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0', // Use the correct model ID format if needed
-            contentType: 'application/json',
-            accept: 'application/json',
-            body: JSON.stringify({
-                anthropic_version: 'bedrock-2023-05-31',
-                max_tokens: 4096,
-                messages: [{
-                    role: 'user',
-                    content: prompt
-                }]
-            })
+        console.log(`Sending request to Bedrock via Vercel AI SDK for user "${userName}"...`);
+        
+        const { text: htmlContent } = await generateText({
+            model: aiSdkModel,
+            messages: coreMessages,
+            maxTokens: 4096,
         });
 
-        console.log(`Sending request to Bedrock for user "${userName}"...`);
-        const response = await bedrockClient.send(command);
-        const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+        console.log(`Received journey HTML fragment from Bedrock (AI SDK) for user "${userName}". Length: ${htmlContent.length}`);
 
-        if (!responseBody.content || !responseBody.content[0] || !responseBody.content[0].text) {
-             console.error('Invalid response structure from Bedrock:', responseBody);
-             throw new Error('Received invalid response structure from Bedrock.');
+        if (!htmlContent || typeof htmlContent !== 'string') {
+            console.error('Invalid response structure from AI SDK Bedrock:', htmlContent);
+            throw new Error('Received invalid or empty response from AI SDK Bedrock.');
+        }
+        
+        // Basic validation (can be improved)
+        // The prompt asks for JSON, so we might expect it to start with '{' or '['
+        // For now, let's keep the div check as the prompt asks for "array of HTML fragment"
+        // which is a bit ambiguous if it means the JSON *contains* HTML or *is* HTML.
+        // The old prompt implied JSON *containing* HTML. Let's assume that.
+        // The final output *is* an HTML string (JSON containing HTML, then extracted).
+        const trimmedContent = htmlContent.trim();
+        if (!trimmedContent.startsWith('{') || !trimmedContent.endsWith('}')) {
+             console.warn('Generated content might not be the expected JSON object string:', trimmedContent.substring(0, 200));
         }
 
-        const htmlContent = responseBody.content[0].text.trim();
-        console.log(`Received journey HTML fragment from Bedrock for user "${userName}". Length: ${htmlContent.length}`);
-
-        // Basic validation: Check if it looks like HTML
-        if (!htmlContent.startsWith('<div') || !htmlContent.endsWith('</div>')) {
-             console.warn('Generated content might not be the expected HTML fragment:', htmlContent.substring(0, 200));
-             // Decide if this is a critical error or if we proceed cautiously
-             // For now, let's proceed but log the warning.
-        }
-
-        return htmlContent;
+        return trimmedContent; // This should be the JSON string containing "cards"
     } catch (error) {
-        console.error(`Error generating journey with Bedrock for user "${userName}":`, error);
-        // Type check the error
+        console.error(`Error generating journey with Vercel AI SDK Bedrock for user "${userName}":`, error);
         const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`Error generating journey with Bedrock: ${message}`);
+        throw new Error(`Error generating journey with Vercel AI SDK Bedrock: ${message}`);
     }
 }
 
@@ -298,25 +297,6 @@ JUST GIVE THE JSON DIRECTLY, DO NOT INCLUDE ANY OTHER TEXT.`;
 // --- API Route Handler ---
 
 export async function POST(request: Request) {
-  // Attempt to prevent AWS SDK from loading shared config file
-  // This is to avoid "fs.readFile is not implemented" errors from [unenv]
-  // when the SDK tries to access ~/.aws/config in environments like Cloudflare Workers.
-  try {
-    // Ensure process and process.env exist, common in shimmed environments
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).process = (globalThis as any).process || {};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).process.env = (globalThis as any).process.env || {};
-
-    // Set AWS_SDK_LOAD_CONFIG to '0' to disable loading of shared config files
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).process.env.AWS_SDK_LOAD_CONFIG = '0';
-    console.log('Successfully set AWS_SDK_LOAD_CONFIG to "0" to prevent AWS SDK filesystem access for config.');
-  } catch (e) {
-    // Log a warning if setting the environment variable fails, though it's unlikely.
-    console.warn('Could not set process.env.AWS_SDK_LOAD_CONFIG to "0":', e instanceof Error ? e.message : String(e));
-  }
-
   // 1. Get Cloudflare context and environment variables
   let cfEnv: Env;
   try {
@@ -324,7 +304,6 @@ export async function POST(request: Request) {
       cfEnv = env as Env; // Cast to our interface
   } catch (error) {
       console.error("Failed to get Cloudflare context:", error);
-      // Type check the error
       const message = error instanceof Error ? error.message : 'Unknown server configuration error';
       return NextResponse.json({ error: `Server configuration error: ${message}` }, { status: 500 });
   }
@@ -332,84 +311,71 @@ export async function POST(request: Request) {
   // 2. Parse request body for 'name'
   let name: string;
   try {
-      const body: unknown = await request.json(); // Parse as unknown
+      const body: unknown = await request.json(); 
 
-      // Use the type guard to validate
       if (!isValidRequestBody(body)) {
           return NextResponse.json({ error: 'Missing or invalid "name" (string) in request body.' }, { status: 400 });
       }
-
-      // Now body is safely typed as { name: string }
       name = body.name.trim();
   } catch (error) {
-      // Type check the error
       const message = error instanceof Error ? error.message : 'Could not parse request body';
       console.error("Failed to parse request body:", error);
       return NextResponse.json({ error: `Invalid request body. Expected JSON. ${message}` }, { status: 400 });
   }
 
-  let bedrockClient: BedrockRuntimeClient;
+  // Declare variables that will be used in the try block
+  let aiSdkModel: LanguageModel;
   let messages: ZulipMessage[];
   let userId: string;
-  let journeyHtml: string;
-  let profilePictureUrl: string | null = null; // Variable to hold profile pic URL
+  let journeyHtml: string; // This will now be the JSON string containing HTML cards
+  let profilePictureUrl: string | null = null;
 
   try {
-    // 3. Validate Zulip Credentials from Env (using ZULIP_USERNAME, removed ZULIP_REALM check)
+    // 3. Validate Zulip Credentials from Env
     if (!cfEnv.ZULIP_USERNAME || !cfEnv.ZULIP_API_KEY) {
         throw new Error('Zulip credentials (ZULIP_USERNAME, ZULIP_API_KEY) are not configured in environment.');
     }
 
-    // 4. Fetch Zulip Messages (using refactored function)
+    // 4. Fetch Zulip Messages
     console.log(`Fetching Zulip messages for: ${name}`);
-    // Destructure the result
-    const fetchResult = await fetchAllZulipMessages(
-        name, // topicName
-        cfEnv.ZULIP_USERNAME,
-        cfEnv.ZULIP_API_KEY
-    );
+    const fetchResult = await fetchAllZulipMessages(name, cfEnv.ZULIP_USERNAME, cfEnv.ZULIP_API_KEY);
     messages = fetchResult.messages;
-    profilePictureUrl = fetchResult.profilePictureUrl; // Store the URL
+    profilePictureUrl = fetchResult.profilePictureUrl;
 
     if (messages.length === 0) {
-         console.warn(`No messages found for topic "${name}". Proceeding without messages.`);
-         // Decide how to handle: error out, or generate a default/empty journey?
-         // Let's proceed and let the LLM handle the lack of messages if necessary,
-         // but update the DB count to 0.
+         console.warn(`No messages found for topic "${name}". Proceeding to generate journey, but it might be sparse.`);
     }
 
     // 5. Upsert Recurser Record (Messages and Profile Picture)
     console.log(`Upserting recurser data for: ${name}`);
-    // Pass the profile picture URL to the upsert function
     userId = await upsertRecurserWithMessageData(cfEnv.DB, name, messages.length, profilePictureUrl);
     console.log(`Recurser data upserted for "${name}", User ID: ${userId}`);
 
-    // 6. Initialize Bedrock Client
-    console.log("Initializing Bedrock client...");
-    bedrockClient = await initializeBedrockClient(cfEnv);
-    console.log("Bedrock client initialized.");
+    // 6. Initialize Vercel AI SDK Bedrock Model
+    console.log("Initializing Vercel AI SDK Bedrock model...");
+    aiSdkModel = await initializeAiSdkBedrockModel(cfEnv); // Changed function call
+    console.log("Vercel AI SDK Bedrock model initialized.");
 
-    // 7. Generate Journey HTML using Bedrock
-    console.log(`Generating journey HTML for: ${name}`);
-    // Pass an empty array if no messages were found
-    journeyHtml = await generateJourneyHtmlFromMessages(bedrockClient, messages || [], name);
-    console.log(`Journey HTML generated for: ${name}`);
+    // 7. Generate Journey HTML (JSON string) using AI SDK
+    console.log(`Generating journey content for: ${name}`);
+    // Pass an empty array if no messages were found, handled by generateJourneyHtmlFromMessages
+    journeyHtml = await generateJourneyHtmlFromMessages(aiSdkModel, messages || [], name); // Changed first param
+    console.log(`Journey content (JSON string) generated for: ${name}`);
 
-    // 8. Update Recurser Record (Journey)
-    console.log(`Updating journey data in DB for: ${name} (ID: ${userId})`);
+    // 8. Update Recurser Record (Journey JSON string)
+    console.log(`Updating journey content in DB for: ${name} (ID: ${userId})`);
     await updateRecurserWithJourneyData(cfEnv.DB, userId, journeyHtml);
-    console.log(`Journey data updated in DB for: ${name}`);
+    console.log(`Journey content updated in DB for: ${name}`);
 
     // 9. Return Success Response
     return NextResponse.json({
         message: `Successfully generated and saved journey for ${name}.`,
         userId: userId,
+        // journey: journeyHtml, // Optionally return the journey content (JSON string)
     }, { status: 200 });
 
   } catch (error) {
-    // Catch any error from the sequential steps
     console.error(`Error processing generate-journey request for "${name}":`, error);
-    // Type check the error
     const message = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: `Failed to generate journey: ${message}` }, { status: 500 });
   }
