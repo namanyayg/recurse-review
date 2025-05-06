@@ -217,7 +217,8 @@ Your task is to analyze these messages and create a set of beautiful, shareable 
 
 Format requirements:
 - Use Tailwind CSS classes for all styling (NO custom CSS)
-- Create visually appealing cards with gradients and modern design
+- Create visually appealing cards
+- Ensure each card has good information architecture, no text-sm, but readable text and information with good spacing and layout.
 - Make each card a constrained width 
 - Use Tailwind's built-in color palette for all colors
 - Ensure text is readable with proper contrast

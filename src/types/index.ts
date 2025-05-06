@@ -23,5 +23,7 @@ export interface Journey {
 declare global {
   interface CloudflareEnv {
     DB: D1Database;
+    RECURSE_CLIENT_ID: string;
+    RECURSE_CLIENT_SECRET: string;
   }
 } 

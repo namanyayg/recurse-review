@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server';
-
 export const config = {
   matcher: '/:slug*'
 };
 
-export async function middleware() {
-  return NextResponse.next();
-} 
+import { auth } from "./app/auth"
+ 
+export default auth((req) => {
+  if (!req.auth && !req.nextUrl.pathname.includes("/api/auth/signin")) {
+    const newUrl = new URL("/api/auth/signin", req.nextUrl.origin)
+    return Response.redirect(newUrl)
+  }
+})
