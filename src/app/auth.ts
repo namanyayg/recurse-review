@@ -64,6 +64,7 @@ const authResult = async (): Promise<NextAuthResult> => {
         },
         token: "https://www.recurse.com/oauth/token",
         userinfo: "https://www.recurse.com/api/v1/people/me", // Assumption, adjust if incorrect
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         profile(profile: any) { // Using any for profile to avoid specific field errors for now, refine with actual RC response
           // console.log("Recurse Profile:", profile); // DEBUG
           return {
