@@ -291,6 +291,25 @@ JUST GIVE THE JSON DIRECTLY, DO NOT INCLUDE ANY OTHER TEXT.`;
 // --- API Route Handler ---
 
 export async function POST(request: Request) {
+  // Attempt to prevent AWS SDK from loading shared config file
+  // This is to avoid "fs.readFile is not implemented" errors from [unenv]
+  // when the SDK tries to access ~/.aws/config in environments like Cloudflare Workers.
+  try {
+    // Ensure process and process.env exist, common in shimmed environments
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).process = (globalThis as any).process || {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).process.env = (globalThis as any).process.env || {};
+
+    // Set AWS_SDK_LOAD_CONFIG to '0' to disable loading of shared config files
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).process.env.AWS_SDK_LOAD_CONFIG = '0';
+    console.log('Successfully set AWS_SDK_LOAD_CONFIG to "0" to prevent AWS SDK filesystem access for config.');
+  } catch (e) {
+    // Log a warning if setting the environment variable fails, though it's unlikely.
+    console.warn('Could not set process.env.AWS_SDK_LOAD_CONFIG to "0":', e instanceof Error ? e.message : String(e));
+  }
+
   // 1. Get Cloudflare context and environment variables
   let cfEnv: Env;
   try {
@@ -393,4 +412,4 @@ export async function POST(request: Request) {
 function isValidRequestBody(body: unknown): body is { name: string } {
     if (typeof body !== 'object' || body === null) return false;
     return 'name' in body && typeof (body as { name: unknown }).name === 'string' && (body as { name: string }).name.trim() !== '';
-} 
+}
