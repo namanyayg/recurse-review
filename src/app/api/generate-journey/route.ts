@@ -274,7 +274,7 @@ ${JSON.stringify(processedMessages, null, 2)}`;
             }),
         });
 
-        console.log(`Received journey HTML fragment from Bedrock (AI SDK) for user "${userName}". Length: ${htmlContent.length}`);
+        console.log(`Received journey HTML fragment from Bedrock (AI SDK) for user "${userName}"`);
 
         if (!htmlContent) {
             console.error('Invalid response structure from AI SDK Bedrock:', htmlContent);
