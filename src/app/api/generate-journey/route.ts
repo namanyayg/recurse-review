@@ -252,6 +252,8 @@ Don't use text-sm, minimum font size should be text-base. Avoid mt, use mb only 
 Create simple background for the cards in light/white gradients, no background for elements.
 Ensure important elements like titles have good colors. Use emojis, sparingly but interestingly.
 
+Keep text low, make it interesting visually with multiple layouts and styles like an iOS app. Focus on extremely beautiful presentation of each part, quote, etc, like an interactive and well designed product.
+
 Give the result as JSON containing the property "cards" which is an array of HTML fragment with Tailwind classes, each representing it's own spotify wrapped page. Do not include any page structure, CSS, or explanatory text.
 MAKE SURE THE JSON IS FORMATTED AND ESCAPED PERFECTLY; IT SHOULD BE USABLE AS JSON.PARSE WITHOUT ANY ERRORS. Since this will be used by Json.parse, there needs to be proper ESCAPING, so make sure you do that.`;
 
