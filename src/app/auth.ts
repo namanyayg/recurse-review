@@ -46,10 +46,10 @@ function getD1(): D1Database {
 
 const authResult = async (): Promise<NextAuthResult> => { 
   const { env } = await getCloudflareContext({async: true})
-  if (!env.RECURSE_CLIENT_ID || !env.RECURSE_CLIENT_SECRET) {
-    console.log("Seeing env", env)
-    throw new Error("RECURSE_CLIENT_ID and RECURSE_CLIENT_SECRET must be set in the environment variables");
-  }
+  // if (!env.RECURSE_CLIENT_ID || !env.RECURSE_CLIENT_SECRET) {
+  //   console.log("Seeing env", env)
+  //   throw new Error("RECURSE_CLIENT_ID and RECURSE_CLIENT_SECRET must be set in the environment variables");
+  // }
   return NextAuth({
     adapter: D1Adapter(getD1()),
     providers: [
