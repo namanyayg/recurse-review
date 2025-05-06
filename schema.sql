@@ -1,6 +1,3 @@
--- Drop existing table if it exists
-DROP TABLE IF EXISTS recursers;
-
 -- Create recursers table with simplified schema
 CREATE TABLE IF NOT EXISTS recursers (
     id TEXT PRIMARY KEY,
@@ -11,4 +8,10 @@ CREATE TABLE IF NOT EXISTS recursers (
     zulip_messages_updated_at DATETIME,
     journey_updated_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-); 
+);
+
+-- DROP TABLE IF EXISTS sessions;
+-- DROP TABLE IF EXISTS accounts;
+-- DROP TABLE IF EXISTS users;
+-- DROP TABLE IF EXISTS verification_tokens;
+DROP TABLE IF EXISTS journeys;
