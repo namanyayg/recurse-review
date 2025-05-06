@@ -247,7 +247,7 @@ Make it look like spotify wrapped, but with a focus on the Recurse Center experi
 
 Make it BEAUTIFUL with multiple colors, emojis, styling, fonts. It needs to be EXTREMELY ATTRACTIVE and visually and aesthetically appealing.
 
-Don't use text-sm, minimum font size should be text-base.
+Don't use text-sm, minimum font size should be text-base. Avoid mt, use mb only (one directional margin)
 
 Create simple background for the cards in light/white gradients, no background for elements.
 Ensure important elements like titles have good colors. Use emojis, sparingly but interestingly.
