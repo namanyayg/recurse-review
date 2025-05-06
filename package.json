@@ -36,7 +36,6 @@
 		"zulip-js": "^2.1.0"
 	},
 	"devDependencies": {
-		"@cloudflare/next-on-pages": "^1.13.12",
 		"@cloudflare/workers-types": "^4.20250430.0",
 		"@eslint/eslintrc": "^3",
 		"@tailwindcss/postcss": "^4",

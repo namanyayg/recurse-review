@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import crypto from 'crypto';
 import { Buffer } from 'buffer';
-
+import { z } from 'zod';
 // Add Vercel AI SDK imports
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
-import { generateText, CoreMessage } from 'ai';
+import { CoreMessage, generateObject } from 'ai';
 import { LanguageModel } from 'ai'; // Type for the model instance
 
 // Minimal interface for the Zulip API response
@@ -182,7 +182,7 @@ async function updateRecurserWithJourneyData(db: D1Database, userId: string, jou
 // --- Bedrock Helper Functions (Refactored for Vercel AI SDK) ---
 
 // Store the model ID, e.g., from Anthropic Claude 3.5 Sonnet
-const BEDROCK_MODEL_ID = 'anthropic.claude-3-5-sonnet-20240620-v1:0';
+const BEDROCK_MODEL_ID = 'us.anthropic.claude-3-5-sonnet-20241022-v2:0';
 
 async function initializeAiSdkBedrockModel(env: Env): Promise<LanguageModel> {
     if (!env.AWS_REGION || !env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) {
@@ -245,10 +245,14 @@ Format requirements:
 
 Make it look like spotify wrapped, but with a focus on the Recurse Center experience, using emojis and styling and presentation like it.
 
+Make it BEAUTIFUL with multiple colors, emojis, styling, fonts. It needs to be EXTREMELY ATTRACTIVE and visually and aesthetically appealing.
+
+Don't use text-sm, minimum font size should be text-base.
+
+Create simple backgrounds in light/white gradients; but ensure important elements like titles have good colors. Use emojis, sparingly but interestingly.
+
 Give the result as JSON containing the property "cards" which is an array of HTML fragment with Tailwind classes, each representing it's own spotify wrapped page. Do not include any page structure, CSS, or explanatory text.
-MAKE SURE THE JSON IS FORMATTED AND ESCAPED PERFECTLY.
-The fragment should start and end with a div that uses Tailwind classes.
-JUST GIVE THE JSON DIRECTLY, DO NOT INCLUDE ANY OTHER TEXT.`;
+MAKE SURE THE JSON IS FORMATTED AND ESCAPED PERFECTLY; IT SHOULD BE USABLE AS JSON.PARSE WITHOUT ANY ERRORS. Since this will be used by Json.parse, there needs to be proper ESCAPING, so make sure you do that.`;
 
     const userMessagesContent = `Here are the messages to analyze for user "${userName}":
 ${JSON.stringify(processedMessages, null, 2)}`;
@@ -261,31 +265,25 @@ ${JSON.stringify(processedMessages, null, 2)}`;
     try {
         console.log(`Sending request to Bedrock via Vercel AI SDK for user "${userName}"...`);
         
-        const { text: htmlContent } = await generateText({
+        const { object: htmlContent } = await generateObject({
             model: aiSdkModel,
             messages: coreMessages,
             maxTokens: 4096,
+            schema: z.object({
+                cards: z.array(z.string()),
+            }),
         });
 
         console.log(`Received journey HTML fragment from Bedrock (AI SDK) for user "${userName}". Length: ${htmlContent.length}`);
 
-        if (!htmlContent || typeof htmlContent !== 'string') {
+        if (!htmlContent) {
             console.error('Invalid response structure from AI SDK Bedrock:', htmlContent);
             throw new Error('Received invalid or empty response from AI SDK Bedrock.');
         }
-        
-        // Basic validation (can be improved)
-        // The prompt asks for JSON, so we might expect it to start with '{' or '['
-        // For now, let's keep the div check as the prompt asks for "array of HTML fragment"
-        // which is a bit ambiguous if it means the JSON *contains* HTML or *is* HTML.
-        // The old prompt implied JSON *containing* HTML. Let's assume that.
-        // The final output *is* an HTML string (JSON containing HTML, then extracted).
-        const trimmedContent = htmlContent.trim();
-        if (!trimmedContent.startsWith('{') || !trimmedContent.endsWith('}')) {
-             console.warn('Generated content might not be the expected JSON object string:', trimmedContent.substring(0, 200));
-        }
 
-        return trimmedContent; // This should be the JSON string containing "cards"
+        const journeyString = JSON.stringify(htmlContent);
+        console.log(`Journey string: ${journeyString}`);
+        return journeyString;
     } catch (error) {
         console.error(`Error generating journey with Vercel AI SDK Bedrock for user "${userName}":`, error);
         const message = error instanceof Error ? error.message : String(error);
