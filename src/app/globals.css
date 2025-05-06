@@ -2,11 +2,26 @@
 
 /* Text and Background colors for all color scales */
 @source inline("{,hover:}{text,bg}-{slate,gray,zinc,neutral,stone,red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose}-{50,{100..900..100},950}");
-
 /* Gradient utilities */
 @source inline("bg-gradient-{to-{r,l,t,b,tr,tl,br,bl}}");
 @source inline("{from,via,to}-{slate,gray,zinc,neutral,stone,red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose}-{50,{100..900..100},950}");
-
+/* Font size utilities */
+@source inline("text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,8xl,9xl}");
+/* Margin utilities */
+@source inline("m{,-t,-r,-b,-l,-x,-y}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,72,80,96}");
+/* Padding utilities */
+@source inline("p{,-t,-r,-b,-l,-x,-y}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,72,80,96}");
+/* Space utilities */
+@source inline("space-{x,y}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,72,80,96}");
+/* Flex utilities */
+@source inline("flex{,-row,-col,-row-reverse,-col-reverse}");
+@source inline("flex-{1,auto,initial,none}");
+@source inline("flex-{grow,shrink}-{0,1}");
+@source inline("flex-wrap{,-reverse}");
+@source inline("items-{start,end,center,baseline,stretch}");
+@source inline("justify-{start,end,center,between,around,evenly}");
+@source inline("content-{start,end,center,between,around,evenly}");
+@source inline("gap-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,72,80,96}");
 
 /* Custom styles can be added below */
 .journey-card > * {

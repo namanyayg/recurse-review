@@ -249,7 +249,8 @@ Make it BEAUTIFUL with multiple colors, emojis, styling, fonts. It needs to be E
 
 Don't use text-sm, minimum font size should be text-base.
 
-Create simple backgrounds in light/white gradients; but ensure important elements like titles have good colors. Use emojis, sparingly but interestingly.
+Create simple background for the cards in light/white gradients, no background for elements.
+Ensure important elements like titles have good colors. Use emojis, sparingly but interestingly.
 
 Give the result as JSON containing the property "cards" which is an array of HTML fragment with Tailwind classes, each representing it's own spotify wrapped page. Do not include any page structure, CSS, or explanatory text.
 MAKE SURE THE JSON IS FORMATTED AND ESCAPED PERFECTLY; IT SHOULD BE USABLE AS JSON.PARSE WITHOUT ANY ERRORS. Since this will be used by Json.parse, there needs to be proper ESCAPING, so make sure you do that.`;
