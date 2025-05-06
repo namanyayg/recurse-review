@@ -54,7 +54,7 @@ async function fetchAllZulipMessages(
     ]);
     const params = new URLSearchParams({
         anchor: 'newest',
-        num_before: '1000',
+        num_before: '100',
         num_after: '0',
         narrow: narrow,
         apply_markdown: 'false'
