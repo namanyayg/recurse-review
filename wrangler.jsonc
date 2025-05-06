@@ -16,5 +16,10 @@
       "database_name": "recurse-review-db-new",
       "database_id": "c6022ba7-eb65-464e-b170-4c1c506fd782"
     }
-  ]
+  ],
+  "observability": {
+    "logs": {
+      "enabled": true
+    }
+  }
 }

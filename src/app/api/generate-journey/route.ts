@@ -185,10 +185,11 @@ async function initializeBedrockClient(env: Env): Promise<BedrockRuntimeClient> 
             region: env.AWS_REGION,
             credentials: {
                 accessKeyId: env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: env.AWS_SECRET_ACCESS_KEY
+                secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+                // sessionToken: env.AWS_SESSION_TOKEN, // Add if using temporary credentials
             }
         });
-        console.log('Bedrock client initialized successfully');
+        console.log('Bedrock client initialized successfully with explicit credentials.');
         return client;
     } catch (error) {
         console.error('Error initializing Bedrock client:', error);
