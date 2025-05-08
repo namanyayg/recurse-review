@@ -43,13 +43,7 @@
 
 ## Routes Structure
 - / (Homepage): List of all recursers
-- /[username] : Individual recurser journey page
-
-## Technical Decisions
-1. User Identification
-   - Consistent use of "namanyay" as user identifier
-   - ES module syntax for imports/exports
-   - Structured JSON format for journey backups
+- /[slug] : Individual recurser journey page
 
 ## Dependencies
 - AWS Bedrock for AI processing
