@@ -123,10 +123,13 @@ async function fetchAllZulipMessages(
 async function upsertRecurserWithMessageData(
     db: D1Database,
     name: string,
-    messageCount: number,
-    profilePictureUrl: string | null
+    profilePictureUrl: string | null,
+    messages: ZulipMessage[]
 ): Promise<string> {
     const now = new Date().toISOString();
+    const messageCount = messages.length;
+    const zulipMessagesJson = JSON.stringify(messages);
+
     try {
         // Check if user exists
         const existingUserStmt = db.prepare('SELECT id FROM recursers WHERE name = ?');
@@ -135,21 +138,17 @@ async function upsertRecurserWithMessageData(
         if (existingUser) {
             console.log(`User "${name}" found with ID: ${existingUser.id}. Updating data.`);
             const updateStmt = db.prepare(
-                // Update profile picture URL as well
-                'UPDATE recursers SET zulip_messages = ?, zulip_messages_updated_at = ?, profile_picture_url = ? WHERE id = ?'
+                'UPDATE recursers SET zulip_messages = ?, zulip_messages_updated_at = ?, profile_picture_url = ?, zulip_messages_content = ? WHERE id = ?'
             );
-            // Bind the profile picture URL (can be null)
-            await updateStmt.bind(messageCount, now, profilePictureUrl, existingUser.id).run();
+            await updateStmt.bind(messageCount, now, profilePictureUrl, zulipMessagesJson, existingUser.id).run();
             return existingUser.id;
         } else {
             console.log(`User "${name}" not found. Creating new record.`);
             const newId = crypto.randomUUID();
             const insertStmt = db.prepare(
-                // Include profile picture URL in insert
-                'INSERT INTO recursers (id, name, zulip_messages, zulip_messages_updated_at, created_at, profile_picture_url) VALUES (?, ?, ?, ?, ?, ?)'
+                'INSERT INTO recursers (id, name, zulip_messages, zulip_messages_updated_at, created_at, profile_picture_url, zulip_messages_content) VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
-            // Bind the profile picture URL (can be null)
-            await insertStmt.bind(newId, name, messageCount, now, now, profilePictureUrl).run();
+            await insertStmt.bind(newId, name, messageCount, now, now, profilePictureUrl, zulipMessagesJson).run();
             console.log(`New user "${name}" created with ID: ${newId}.`);
             return newId;
         }
@@ -252,7 +251,7 @@ Don't use text-sm, minimum font size should be text-base. Avoid mt, use mb only 
 Create simple background for the cards in light/white gradients, no background for elements.
 Ensure important elements like titles have good colors. Use emojis, sparingly but interestingly.
 
-Keep text low, make it interesting visually with multiple layouts and styles like an iOS app. Focus on extremely beautiful presentation of each part, quote, etc, like an interactive and well designed product.
+Keep text low, make it interesting visually with multiple layouts and styles like an iOS app. Focus on extremely beautiful presentation of each part, quote, etc, like an interactive and well designed product. Like present it in an dynamic and fun UI, instead of lists you can make boxes or some other fun UI elements like that.
 
 Give the result as JSON containing the property "cards" which is an array of HTML fragment with Tailwind classes, each representing it's own spotify wrapped page. Do not include any page structure, CSS, or explanatory text.
 MAKE SURE THE JSON IS FORMATTED AND ESCAPED PERFECTLY; IT SHOULD BE USABLE AS JSON.PARSE WITHOUT ANY ERRORS. Since this will be used by Json.parse, there needs to be proper ESCAPING, so make sure you do that.`;
@@ -347,9 +346,9 @@ export async function POST(request: Request) {
          console.warn(`No messages found for topic "${name}". Proceeding to generate journey, but it might be sparse.`);
     }
 
-    // 5. Upsert Recurser Record (Messages and Profile Picture)
+    // 5. Upsert Recurser Record (Messages, Profile Picture, and Message Content)
     console.log(`Upserting recurser data for: ${name}`);
-    userId = await upsertRecurserWithMessageData(cfEnv.DB, name, messages.length, profilePictureUrl);
+    userId = await upsertRecurserWithMessageData(cfEnv.DB, name, profilePictureUrl, messages);
     console.log(`Recurser data upserted for "${name}", User ID: ${userId}`);
 
     // 6. Initialize Vercel AI SDK Bedrock Model

@@ -1,0 +1,1 @@
+ALTER TABLE recursers ADD COLUMN zulip_messages_content TEXT; 

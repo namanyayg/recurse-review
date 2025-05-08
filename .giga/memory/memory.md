@@ -20,8 +20,7 @@
    - D1 database storage
    - Profile page integration
    - Implementation Details:
-     - fetch_messages.js: Retrieves messages from Zulip
-     - generate_journey.js: Processes messages with Claude and stores in D1
+     - API Route (`src/app/api/generate-journey/route.ts`): Handles fetching Zulip messages, processing with Claude, and storing in D1.
      - Environment variables loaded from .env file
      - Local backups stored in data/messages.json
    - Known Issues:
