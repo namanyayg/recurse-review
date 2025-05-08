@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS recursers (
     journey TEXT,
     zulip_messages INTEGER,
     zulip_messages_updated_at DATETIME,
+    zulip_messages_content TEXT,
     journey_updated_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
